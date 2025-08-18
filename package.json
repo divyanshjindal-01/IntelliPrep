@@ -1,0 +1,43 @@
+{
+  "name": "divyanshudebug-buddy",
+  "displayName": "debug buddy",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.103.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand: divyanshudebug-buddy.findMistakes",
+    "onCommand: divyanshudebug-buddy.printHelloWorld"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [{
+      "command": "divyanshudebug-buddy.findMistakes",
+      "title": "Find Mistakes"
+    },
+    {
+      "command": "divyanshudebug-buddy.printHelloWorld",
+      "title": "Hello World"
+    }
+  
+  ]
+
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.103.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "eslint": "^9.32.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
