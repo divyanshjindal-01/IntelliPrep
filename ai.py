@@ -15,8 +15,22 @@
 # # print("AI Response:\n", response.text)
 # ans = (response.text)
 
-import json
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
-with open("shared.json", "r") as f:
-    data = json.load(f)
-    print("Received from JS:", data["value"])
+app = Flask(__name__)
+CORS(app)  # enable CORS for all routes
+
+@app.route("/")
+def home():
+    return "Flask server is running!"
+
+@app.route("/send", methods=["POST"])
+def receive():
+    data = request.get_json()
+    js_value = data.get("value")
+    print("Got from JS:", js_value)
+    return jsonify({"status": "ok", "received": js_value})
+
+if __name__ == "__main__":
+    app.run()
