@@ -1,36 +1,38 @@
-# import google.generativeai as genai
+import json
+import os
+import google.generativeai as genai
 
-# # Configure with your Gemini API key
-# genai.configure(api_key="AIzaSyC2HASYqbKFJbxZhYlmgfFAx0q_3Lz6Uqc")
+# Safe default text
+file_content = "No input text provided."
 
-# model = genai.GenerativeModel("gemini-1.5-flash")
+# ✅ Try reading data.json
+if os.path.exists("data.json"):
+    try:
+        with open("data.json", "r") as f:
+            data = json.load(f)
+        if "value" in data and data["value"].strip():
+            file_content = data["value"]
+        else:
+            print("⚠️ Warning: 'value' missing or empty in data.json, using fallback text.")
+    except Exception as e:
+        print(f"⚠️ Could not read data.json: {e}")
+else:
+    print("⚠️ data.json not found, using fallback text.")
 
-# # Read from a text file
-# with open("gobar.c", "r", encoding="utf-8") as f:
-#     file_content = f.read()
+# Configure with your Gemini API key
+genai.configure(api_key="AIzaSyC2HASYqbKFJbxZhYlmgfFAx0q_3Lz6Uqc")
 
-# # Ask Gemini to analyze the file
-# response = model.generate_content(f"Summarize this document:\n\n{file_content}")
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-# # print("AI Response:\n", response.text)
-# ans = (response.text)
+# Ask Gemini to analyze the file
+response = model.generate_content(f"Summarize this document:\n\n{file_content}")
 
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+# ✅ Print AI response safely
+print("AI Response:\n", response.text if response and response.text else "⚠️ No response")
 
-app = Flask(__name__)
-CORS(app)  # enable CORS for all routes
-
-@app.route("/")
-def home():
-    return "Flask server is running!"
-
-@app.route("/send", methods=["POST"])
-def receive():
-    data = request.get_json()
-    js_value = data.get("value")
-    print("Got from JS:", js_value)
-    return jsonify({"status": "ok", "received": js_value})
-
-if __name__ == "__main__":
-    app.run()
+# Also save to result.json
+try:
+    with open("result.json", "w") as f:
+        json.dump({"ai_response": response.text if response and response.text else ""}, f)
+except Exception as e:
+    print(f"⚠️ Could not save result.json: {e}")

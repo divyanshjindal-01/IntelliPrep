@@ -1,4 +1,6 @@
-const vscode = require('vscode');
+const vscode = require("vscode");
+const { exec } = require("child_process");
+const fs = require("fs");
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -6,74 +8,49 @@ const vscode = require('vscode');
 function activate(context) {
   const outputChannel = vscode.window.createOutputChannel("DebugBuddy");
 
-  // Register the "findMistakes" command.
-  const disposable = vscode.commands.registerCommand(
-    'divyanshudebug-buddy.findMistakes',
-    ()=>{findVar(outputChannel)}
+  let disposable = vscode.commands.registerCommand(
+    "divyanshudebug-buddy.checkForError",
+    () => checkForError(outputChannel)
   );
 
-  // Register the "hello world" command.
-  const helloworld = vscode.commands.registerCommand(
-    'divyanshudebug-buddy.printHelloWorld',()=>printworld()
-  );
-
-  // check "error in code" command.
-  const checkError = vscode.commands.registerCommand(
-    'checkForError',()=>checkForError()
-  )
-
-  // Add to subscriptions so VS Code cleans it up when extension stops
-  context.subscriptions.push(disposable,helloworld,outputChannel);
+  context.subscriptions.push(disposable);
 }
+exports.activate = activate;
 
 function deactivate() {}
+module.exports = { deactivate };
 
-module.exports = {
-  activate,
-  deactivate
-};
-
-
-//  >>>>>>>>>>>>>>>>>>>>>>>>>> find var functions >>>>>>>>>>>>>>>>>>>>>>>>>>
-function findVar (outputChannel){
-    
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showInformationMessage('No active editor found.');
-        return;
-      }
-
-      const text = editor.document.getText();
-      outputChannel.appendLine("Checking current file for 'var'...");
-      if (text.includes('var')) {
-        vscode.window.showWarningMessage("Found 'var'. Consider using 'let' or 'const' instead.");
-        outputChannel.appendLine("⚠️ Found 'var' keyword in file.");
-      } else {
-        vscode.window.showInformationMessage('No mistakes found!');
-      }
-}
-//  >>>>>>>>>>>>>>>>>>>>>>>>>> print hello functions >>>>>>>>>>>>>>>>>>>>>>>>>>
-
-function printworld(){
-  vscode.window.showInformationMessage('hello,world!');
-}
-
-function checkForError(outputChannel){
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> check for error >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+function checkForError(outputChannel) {
   const editor = vscode.window.activeTextEditor;
-  if(!editor){
-    vscode.window.showInformationMessage("first write the code");
+
+  // Get editor text or fallback
+  let text = "No code provided";
+  if (editor) {
+    text = editor.document.getText();
+  } else {
+    vscode.window.showInformationMessage("Editor empty. Using default text.");
+  }
+
+  // ✅ Always create/update data.json
+  try {
+    fs.writeFileSync("data.json", JSON.stringify({ value: text }, null, 2));
+  } catch (err) {
+    vscode.window.showErrorMessage("Failed to create data.json: " + err.message);
     return;
   }
-  const text = editor.document.getText();
-  let suggestion;
-  outputChannel.appendLine(suggestion)
-  // input = text;
-  // output = suggestion
-            fetch("http://127.0.0.1:5000/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ value: text })
-            })
-            .then(res => res.json())
-            .then(data => console.log("Response from Flask:", data));
+
+  // ✅ Run Python with correct command for Windows
+  exec("python ai.py", (error, stdout, stderr) => {
+    if (error) {
+      vscode.window.showErrorMessage(`Python error: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`Stderr: ${stderr}`);
+    }
+
+    outputChannel.show(true);
+    outputChannel.appendLine(stdout);
+  });
 }

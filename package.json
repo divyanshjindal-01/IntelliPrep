@@ -10,22 +10,16 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand: divyanshudebug-buddy.findMistakes",
-    "onCommand: divyanshudebug-buddy.printHelloWorld"
+    "onCommand: divyanshudebug-buddy.checkForError"
   ],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "divyanshudebug-buddy.findMistakes",
-      "title": "Find Mistakes"
-    },
-    {
-      "command": "divyanshudebug-buddy.printHelloWorld",
-      "title": "Hello World"
-    }
-  
-  ]
-
+    "commands": [
+      {
+        "command": "divyanshudebug-buddy.checkForError",
+        "title": "Analyze Code"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint .",
