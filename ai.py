@@ -1,38 +1,29 @@
-import json
-import os
+import socketio
 import google.generativeai as genai
 
-# Safe default text
-file_content = "No input text provided."
+# Create a Socket.IO client
+sio = socketio.Client()
 
-# ✅ Try reading data.json
-if os.path.exists("data.json"):
-    try:
-        with open("data.json", "r") as f:
-            data = json.load(f)
-        if "value" in data and data["value"].strip():
-            file_content = data["value"]
-        else:
-            print("⚠️ Warning: 'value' missing or empty in data.json, using fallback text.")
-    except Exception as e:
-        print(f"⚠️ Could not read data.json: {e}")
-else:
-    print("⚠️ data.json not found, using fallback text.")
-
-# Configure with your Gemini API key
+# Configure Gemini
 genai.configure(api_key="AIzaSyC2HASYqbKFJbxZhYlmgfFAx0q_3Lz6Uqc")
-
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Ask Gemini to analyze the file
-response = model.generate_content(f"Summarize this document:\n\n{file_content}")
+@sio.event
+def connect():
+    print(" Connected to Node server")
 
-# ✅ Print AI response safely
-print("AI Response:\n", response.text if response and response.text else "⚠️ No response")
+@sio.event
+def message_from_node(data):
+    print(" Got code from VSCode")
+    try:
+        response = model.generate_content(f"Summarize this document:\n\n{data}")
+        ai_text = response.text if response and response.text else "⚠️ No response"
+    except Exception as e:
+        ai_text = f"Error: {e}"
 
-# Also save to result.json
-try:
-    with open("result.json", "w") as f:
-        json.dump({"ai_response": response.text if response and response.text else ""}, f)
-except Exception as e:
-    print(f"⚠️ Could not save result.json: {e}")
+    # Send back to Node
+    sio.emit("ai_response", ai_text)
+
+# Connect and wait
+sio.connect("http://localhost:5000")
+sio.wait()
