@@ -44,7 +44,7 @@ function activate(context) {
       });
 
       // When Python connects via socket
-      io.on("connection", (socket) => {
+      io.on("connection", (socket) => {``
         console.log("Python connected ✅");
         socket.emit("message_from_node", text);
 

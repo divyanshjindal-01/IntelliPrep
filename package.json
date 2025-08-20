@@ -10,7 +10,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:divyanshudebug-buddy.checkForError"
+    "onCommand: divyanshudebug-buddy.checkForError"
   ],
   "main": "./extension.js",
 "contributes": {
