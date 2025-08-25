@@ -10,12 +10,9 @@
     "Other"
   ],
   "activationEvents": [
-<<<<<<< HEAD
-    "onCommand:divyanshudebug-buddy.checkForError",
-    "onCommand:divyanshudebug-buddy.fixCode"  
-=======
-    "onCommand: divyanshudebug-buddy.checkForError"
->>>>>>> 73586de58eeb9c06731ac45265cdf8cae7e8983e
+    "onCommand: divyanshudebug-buddy.checkForError",
+    "onCommand: divyanshudebug-buddy.fixCode"
+
   ],
   "main": "./extension.js",
   "contributes": {
