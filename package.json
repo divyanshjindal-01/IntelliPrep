@@ -10,17 +10,22 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:divyanshudebug-buddy.checkForError"
+    "onCommand:divyanshudebug-buddy.checkForError",
+    "onCommand:divyanshudebug-buddy.fixCode"  
   ],
   "main": "./extension.js",
-"contributes": {
-  "commands": [
-    {
-      "command": "divyanshudebug-buddy.checkForError",
-      "title": "Analyze Code"
-    }
-  ]
-},
+  "contributes": {
+    "commands": [
+      {
+        "command": "divyanshudebug-buddy.checkForError",
+        "title": "Analyze Code"
+      },
+      {
+        "command": "divyanshudebug-buddy.fixCode", 
+        "title": "Fix Code"
+      }
+    ]
+  },
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run lint",
