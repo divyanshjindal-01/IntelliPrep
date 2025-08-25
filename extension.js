@@ -54,13 +54,20 @@ function activate(context) {
       outputChannel.show();
     });
 
-    pyProcess.on("exit", (code) => {
-      outputChannel.appendLine(`❌ Python process exited with code ${code}`);
-      isConnected = false;
-      // Attempt to restart Python if it crashes
-      setTimeout(startPythonBackend, 3000);
-    });
-  }
+<<<<<<< HEAD
+  //   pyProcess.on("exit", (code) => {
+  //     outputChannel.appendLine(`❌ Python process exited with code ${code}`);
+  //     isConnected = false;
+  //     // Attempt to restart Python if it crashes
+  //     setTimeout(startPythonBackend, 3000);
+  //   });
+  // }
+=======
+      // When Python connects via socket
+      io.on("connection", (socket) => {``
+        console.log("Python connected ✅");
+        socket.emit("message_from_node", text);
+>>>>>>> 73586de58eeb9c06731ac45265cdf8cae7e8983e
 
   // Start Python backend once
   startPythonBackend();
