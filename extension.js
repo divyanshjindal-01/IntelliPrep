@@ -23,7 +23,7 @@ function activate(context) {
     isConnected = true;
     output.appendLine("[Node] ✅ Python connected");
 
-    socket.on("ai_response", (msg) => {
+    socket.on("ai_analyze", (msg) => {
       output.appendLine("🧠 AI Response: " + msg);
       output.show();
     });

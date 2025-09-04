@@ -23,13 +23,13 @@ def on_message_from_node(data):
     print("[Py] 📩 Received code (len=", len(data), ")")
     # --- If using Gemini ---
     try:
-        resp = model.generate_content(f"Summarize this document:\n\n{data}")
+        resp = model.generate_content(f"Brief summarize this document:\n\n{data}")
         text = resp.text if resp and getattr(resp, 'text', None) else "No response"
     except Exception as e:
         text = f"Gemini error: {e}"
     # For demo without Gemini:
     # text = f"Summary: {data[:120]}... (truncated)"
-    # sio.emit("ai_response", text)
+    sio.emit("ai_analyze", text)
 
 @sio.on("fix_code_request")
 def on_fix_code_request(data):
