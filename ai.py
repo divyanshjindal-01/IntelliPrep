@@ -2,6 +2,8 @@ import sys
 import socketio
 import google.generativeai as genai
 
+
+
 # Ensure stdout can print Unicode on Windows
 try:
     sys.stdout.reconfigure(encoding='utf-8')
