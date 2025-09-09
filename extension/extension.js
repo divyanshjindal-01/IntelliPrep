@@ -51,7 +51,7 @@ function activate(context) {
 
     pyProcess = spawn("python", [pyPath], {
       cwd: __dirname,
-      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+      env: { ...process.env, PYTHONIOENCODING: "utf-8" }, 
     });
 
     pyProcess.stdout.on("data", (data) => {

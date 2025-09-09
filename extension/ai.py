@@ -26,7 +26,8 @@ def on_message_from_node(data):
     # --- If using Gemini ---
     try:
         resp = model.generate_content(f"Brief summarize this document:\n\n{data}")
-        text = resp.text if resp and getattr(resp, 'text', None) else "No response"
+        text = resp.text 
+        # if resp and getattr(resp, 'text', None) else "No response"
     except Exception as e:
         text = f"Gemini error: {e}"
     # For demo without Gemini:
@@ -41,7 +42,8 @@ def on_fix_code_request(data):
    
     try:
         resp = model.generate_content(f"fix this document:\n\n{data}")
-        text = resp.text if resp and getattr(resp, 'text', None) else "No response"
+        text = resp.text
+        # if resp and getattr(resp, 'text', None) else "No response"
     except Exception as e:
         text = f"Gemini error: {e}"
 
