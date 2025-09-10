@@ -1,0 +1,46 @@
+{
+  "name": "divyanshudebug-buddy",
+  "displayName": "debug buddy",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.103.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand: divyanshudebug-buddy.checkForError",
+    "onCommand: divyanshudebug-buddy.fixCode"
+
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "divyanshudebug-buddy.checkForError",
+        "title": "Analyze Code"
+      },
+      {
+        "command": "divyanshudebug-buddy.fixCode", 
+        "title": "Fix Code"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.103.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.32.0"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  }
+}
