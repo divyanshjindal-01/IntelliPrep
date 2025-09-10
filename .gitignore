@@ -20,5 +20,8 @@ Thumbs.db
 # Test output (ignore if test/ is just artifacts, remove if test has actual source)
 test/
 
+
 # Optional: lock file (keep if you want deterministic builds)
  package-lock.json
+.vscodeignore
+ vsc-extension-quickstart.md
