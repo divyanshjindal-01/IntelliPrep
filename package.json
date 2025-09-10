@@ -10,20 +10,15 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand: divyanshudebug-buddy.checkForError",
-    "onCommand: divyanshudebug-buddy.fixCode"
+    "onCommand: divyanshudebug-buddy.analyzeAndFix"
 
   ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "divyanshudebug-buddy.checkForError",
-        "title": "Analyze Code"
-      },
-      {
-        "command": "divyanshudebug-buddy.fixCode", 
-        "title": "Fix Code"
+        "command": "divyanshudebug-buddy.analyzeAndFix",
+        "title": "Analyze and Fix Code"
       }
     ]
   },
