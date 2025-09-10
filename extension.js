@@ -1,121 +1,151 @@
 const vscode = require("vscode");
-const { Server } = require("socket.io");
-const { spawn } = require("child_process");
-const path = require("path");
+const { io } = require("socket.io-client");
 
-/**
- * @param {vscode.ExtensionContext} context
- */
+let socket;
+let panel;
+
 function activate(context) {
-  const output = vscode.window.createOutputChannel("DebugBuddy");
+  // Connect to Python backend
+  socket = io("http://localhost:5000");
 
-  // 1) Start Socket.IO server ONCE
-  const io = new Server(5000, { cors: { origin: "*" } });
-
-  // Track Python process & socket state
-  let pyProcess = null;
-  let isConnected = false;
-  let currentSocket = null;
-
-  // 2) Handle a single connection lifecycle
-  io.on("connection", (socket) => {
-    currentSocket = socket;
-    isConnected = true;
-    output.appendLine("[Node] ✅ Python connected");
-
-    socket.on("ai_analyze", (msg) => {
-      output.appendLine("🧠 AI Response: " + msg);
-      output.show();
-    });
-
-    socket.on("fixed_code_response", (msg) => {
-      output.appendLine("✅ Fixed Code: " + msg);
-      output.show();
-    });
-
-    socket.on("disconnect", () => {
-      output.appendLine("[Node] ❌ Python disconnected");
-      isConnected = false;
-      currentSocket = null;
-      // try to restart python if it died
-      setTimeout(() => startPythonBackend(), 1000);
-    });
+  socket.on("connect", () => {
+    console.log("[VSCode] Connected to backend");
   });
 
-  // 3) Spawn Python backend (idempotent)
-  function startPythonBackend() {
-    if (pyProcess && !pyProcess.killed) return; // already running
-
-    const pyPath = path.join(__dirname, "ai.py");
-    output.appendLine(`[Node] ▶️ Starting Python: ${pyPath}`);
-
-    pyProcess = spawn("python", [pyPath], {
-      cwd: __dirname,
-      env: { ...process.env, PYTHONIOENCODING: "utf-8" }, 
-    });
-
-    pyProcess.stdout.on("data", (data) => {
-      output.appendLine("[Python] " + data.toString().trim());
-    });
-
-    pyProcess.stderr.on("data", (err) => {
-      output.appendLine("⚠️ Python Error: " + err.toString().trim());
-      output.show();
-    });
-
-    pyProcess.on("exit", (code, signal) => {
-      output.appendLine(`[Node] Python exited code=${code} signal=${signal ?? ""}`);
-      isConnected = false;
-      currentSocket = null;
-      pyProcess = null;
-      // attempt auto-restart
-      setTimeout(() => startPythonBackend(), 1500);
-    });
-  }
-
-  // Start backend once on activation
-  startPythonBackend();
-
-  // 4) Commands
-  const analyzeCmd = vscode.commands.registerCommand(
-    "divyanshudebug-buddy.checkForError",
-    () => {
+  // Register single command: Analyze & Fix
+  let analyzeAndFix = vscode.commands.registerCommand(
+    "divyanshudebug-buddy.analyzeAndFix",
+    function () {
       const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showInformationMessage("Please open a file first.");
-        return;
+      if (editor) {
+        const code = editor.document.getText();
+        socket.emit("message_from_node", code); // send code to Python
+        vscode.window.showInformationMessage("📤 Sending code to AI...");
       }
-      const text = editor.document.getText();
-      if (!isConnected || !currentSocket) {
-        vscode.window.showWarningMessage("⏳ Python not connected yet. Try again in a moment.");
-        return;
-      }
-      currentSocket.emit("message_from_node", text);
-      vscode.window.showInformationMessage("📤 Code sent to AI for analysis.");
     }
   );
 
-  const fixCmd = vscode.commands.registerCommand(
-    "divyanshudebug-buddy.fixCode",
-    () => {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showInformationMessage("Please open a file first.");
-        return;
-      }
-      const text = editor.document.getText();
-      if (!isConnected || !currentSocket) {
-        vscode.window.showWarningMessage("⏳ Python not connected yet. Try again in a moment.");
-        return;
-      }
-      currentSocket.emit("fix_code_request", text);
-      vscode.window.showInformationMessage("📤 Code sent to AI for fixing.");
-    }
-  );
+  // Listen for AI JSON response
+  socket.on("ai_result", (result) => {
+    try {
+      const parsed = typeof result === "string" ? JSON.parse(result) : result;
 
-  context.subscriptions.push(analyzeCmd, fixCmd, { dispose: () => io.close() });
+      // Create or reveal side panel
+      if (!panel) {
+        panel = vscode.window.createWebviewPanel(
+          "debugBuddyResults",
+          "Debug Buddy Results",
+          vscode.ViewColumn.Beside,
+          { enableScripts: true }
+        );
+
+        // Listen for button clicks from Webview
+        panel.webview.onDidReceiveMessage((message) => {
+          if (message.command === "applyFix" && message.fix) {
+            applyFix(message.fix);
+          } else if (message.command === "copyFix" && message.fix) {
+            vscode.env.clipboard.writeText(message.fix);
+            vscode.window.showInformationMessage("📋 Fix copied to clipboard!");
+          }
+        });
+      } else {
+        panel.reveal(vscode.ViewColumn.Beside);
+      }
+
+      // Build HTML content for panel
+      panel.webview.html = getWebviewContent(parsed);
+    } catch (err) {
+      vscode.window.showErrorMessage("❌ AI response parse error: " + err.message);
+    }
+  });
+
+  context.subscriptions.push(analyzeAndFix);
 }
 
-function deactivate() {}
+function deactivate() {
+  if (socket) socket.disconnect();
+}
 
-module.exports = { activate, deactivate };  
+function getWebviewContent(parsed) {
+  const fixAvailable = parsed.fix ? true : false;
+
+  return `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      body { font-family: Arial, sans-serif; padding: 15px; line-height: 1.6; }
+      h2 { color: #4CAF50; }
+      .card { background: #1e1e1e; padding: 12px; border-radius: 8px; margin-bottom: 15px; color: #dcdcdc; }
+      .label { font-weight: bold; color: #4CAF50; }
+      pre { background: #252526; padding: 10px; border-radius: 5px; overflow-x: auto; }
+      button { margin-top: 10px; margin-right: 10px; padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; }
+      .apply { background-color: #4CAF50; color: white; }
+      .copy { background-color: #2196F3; color: white; }
+    </style>
+  </head>
+  <body>
+    <h2>Debug Buddy Analysis</h2>
+    <div class="card"><span class="label">Analysis:</span><br>${parsed.analyze || "N/A"}</div>
+    <div class="card"><span class="label">Error Type:</span> ${parsed.type_of_error || "N/A"}</div>
+    <div class="card"><span class="label">Language:</span> ${parsed.programming_language_used || "N/A"}</div>
+    <div class="card">
+      <span class="label">Fixed Code:</span>
+      <pre>${parsed.fix ? escapeHtml(parsed.fix) : "No fix available"}</pre>
+      ${
+        fixAvailable
+          ? `<button class="apply" onclick="applyFix()">Apply Fix</button>
+             <button class="copy" onclick="copyFix()">Copy Fix</button>`
+          : ""
+      }
+    </div>
+
+    <script>
+      const vscode = acquireVsCodeApi();
+
+      function applyFix() {
+        vscode.postMessage({ command: "applyFix", fix: \`${escapeJs(parsed.fix || "")}\` });
+      }
+
+      function copyFix() {
+        vscode.postMessage({ command: "copyFix", fix: \`${escapeJs(parsed.fix || "")}\` });
+      }
+    </script>
+  </body>
+  </html>
+  `;
+}
+
+// Escape HTML for safe display
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+// Escape JS for embedding in <script>
+function escapeJs(str) {
+  return str.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$/g, "\\$");
+}
+
+// Function to apply fix into editor
+function applyFix(newCode) {
+  const editor = vscode.window.activeTextEditor;
+  if (editor) {
+    const edit = new vscode.WorkspaceEdit();
+    const document = editor.document;
+    const firstLine = document.lineAt(0);
+    const lastLine = document.lineAt(document.lineCount - 1);
+    const fullRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
+    edit.replace(document.uri, fullRange, newCode);
+    vscode.workspace.applyEdit(edit);
+    vscode.window.showInformationMessage("✅ Fix applied successfully!");
+  }
+}
+
+module.exports = {
+  activate,
+  deactivate,
+};
