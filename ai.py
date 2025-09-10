@@ -5,6 +5,7 @@ import os
 import json
 from pygments.lexers import guess_lexer
 from pygments.util import ClassNotFound
+from dotenv import load_dotenv
 
 # Ensure stdout can print Unicode on Windows
 try:
@@ -15,7 +16,8 @@ except AttributeError:
 sio = socketio.Client(reconnection=True, reconnection_attempts=0)
 
 # --- Configure Gemini (API key via environment variable) ---
-genai.configure(api_key=os.getenv("************"))
+load_dotenv()
+genai.configure(api_key=os.getenv("API_KEY"))
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 # Auto language detection
