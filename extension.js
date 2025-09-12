@@ -3,7 +3,7 @@ const { io } = require("socket.io-client");
 
 let socket;
 let panel;
-
+  
 function activate(context) {
   // Connect to Python backend
   socket = io("http://localhost:5000");
