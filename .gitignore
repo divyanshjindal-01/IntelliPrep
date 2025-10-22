@@ -1,5 +1,5 @@
 .env
-# node_modules/
+node_modules/
 # VS Code test runner files
 .vscode-test.mjs
 # Logs
@@ -20,5 +20,5 @@ package-lock.json
 vsc-extension-quickstart.md
 .gitignore
 README.md
-# .vscode/
+.vscode/
 src/
