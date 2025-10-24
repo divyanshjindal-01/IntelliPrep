@@ -24,7 +24,8 @@ if not API_KEY:
     raise ValueError("❌ Missing GEMINI_API_KEY in .env")
 
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Use a currently supported stable model
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 
 # --- Language detection with keyword overrides ---
@@ -56,8 +57,19 @@ def unwrap_code_block(s: str) -> str:
     """
     if not s:
         return s
+    # Regex to find any fenced code block (```optional_lang_tag\ncontent\n```)
+    # The (.*?) is a non-greedy match for the content inside
     m = re.search(r"```[a-zA-Z0-9+\-]*\n(.*?)```", s, re.DOTALL)
-    return m.group(1) if m else s
+    
+    # If a code block is found, return its inner content
+    if m:
+        # Check if the extracted content itself is a JSON object by looking for surrounding braces
+        content = m.group(1).strip()
+        if content.startswith('{') and content.endswith('}'):
+             return content
+    
+    # Otherwise return the original string, stripped of leading/trailing whitespace
+    return s.strip()
 
 
 def normalize_lang_tag(lang: str) -> str:
@@ -106,11 +118,12 @@ def polish_analysis(raw: str) -> str:
 def validate_and_patch_fix(ai_fix: str, original_code: str, lang: str, analysis: str) -> str:
     """
     Post-process Gemini's fix:
-    - Unwrap code blocks
+    - Unwrap code blocks (the fix content might be wrapped in a code block inside the JSON 'fix' field)
     - Fix common JS issues (const reassignment, extra semicolons)
     - Default to commenting out reassignment if const is used
     """
-    code = unwrap_code_block(ai_fix or "").strip() or original_code.strip()
+    # Use unwrap_code_block here too, in case the 'fix' field content is wrapped
+    code = unwrap_code_block(ai_fix or original_code).strip() or original_code.strip()
 
     # Normalize multiple semicolons
     code = re.sub(r";{2,}", ";", code)
@@ -152,7 +165,7 @@ def on_message_from_node(data):
     detected_lang = detect_language(data)
 
     prompt = f"""
-You are an AI code assistant. Analyze the following code and return ONLY a JSON object.
+You are an AI code assistant. Analyze the following code and return ONLY a single JSON object. DO NOT include any explanatory text, markdown outside the JSON, or comments.
 The JSON must have these keys:
 - analyze: a clear, detailed explanation of issues found in plain English. Do NOT include fix, type_of_error, or language in this text.
 - fix: the corrected version of the code
@@ -168,7 +181,16 @@ Code:
         print("[DEBUG] Raw Gemini output:", text)
 
         try:
-            resultfrom_ai = json.loads(text)
+            # FIX: Apply unwrap_code_block to remove markdown fences around the JSON
+            clean_text = unwrap_code_block(text)
+            
+            # Fallback if unwrapping found no code block but the text might be clean JSON
+            if not clean_text or not clean_text.strip():
+                clean_text = text.strip()
+                
+            print("[DEBUG] Cleaned JSON candidate:", clean_text)
+
+            resultfrom_ai = json.loads(clean_text)
 
             # normalize language: prefer local detection on obvious mismatches
             ai_lang = (resultfrom_ai.get("programming_language_used") or "").lower()
@@ -194,25 +216,35 @@ Code:
             print("[DEBUG] Original AI fix snippet:", (unwrap_code_block(raw_fix)[:300] + "...") if raw_fix else "<none>")
             print("[DEBUG] Patched fix snippet:", (patched_fix[:300] + "...") if patched_fix else "<none>")
 
-        except json.JSONDecodeError:
-            # If AI didn't return JSON, try to salvage a code block and analysis
+        except json.JSONDecodeError as jde:
+            # If AI didn't return clean JSON, try to salvage a code block and analysis
+            print(f"[ERROR] JSONDecodeError: {jde}. Raw text causing error: {text}")
             analysis_text = polish_analysis(text)
-            # try to extract code block from the raw text
+            
+            # Try to extract code block from the raw text for the 'fix' field
             candidate_fix = unwrap_code_block(text) or data
             patched_fix = validate_and_patch_fix(candidate_fix, data, detected_lang, analysis_text)
 
             result = {
-                "analyze": analysis_text,
+                "analyze": f"AI response parse error (JSONDecodeError). Please check the AI's raw output in the logs. Salvaged analysis: {analysis_text}",
                 "fix": format_fix(patched_fix, detected_lang),
+                "type_of_error": "json_format",
+                "programming_language_used": detected_lang,
+            }
+
+        except Exception as e:
+            result = {
+                "analyze": f"Internal Python Error (non-JSONDecode): {e}",
+                "fix": format_fix(data, detected_lang),
                 "type_of_error": "error",
                 "programming_language_used": detected_lang,
             }
 
     except Exception as e:
         result = {
-            "analyze": f"Gemini error: {e}",
+            "analyze": f"Gemini API Error: {e}",
             "fix": format_fix(data, detected_lang),
-            "type_of_error": "error",
+            "type_of_error": "api_error",
             "programming_language_used": detected_lang,
         }
 
@@ -230,4 +262,4 @@ if __name__ == "__main__":
         sio.wait()
     except Exception as e:
         print(f"[Py] Connect error: {e}")
-# --- End of ai.py ---
+

@@ -1,9 +1,10 @@
 const vscode = require("vscode");
 const { io } = require("socket.io-client");
+const { db } = require("./firebaseAdmin"); // ✅ Import Firestore
 
 let socket;
 let panel;
-  
+
 function activate(context) {
   // Connect to Python backend
   socket = io("http://localhost:5000");
@@ -26,9 +27,20 @@ function activate(context) {
   );
 
   // Listen for AI JSON response
-  socket.on("ai_result", (result) => {
+  socket.on("ai_result", async (result) => {
     try {
       const parsed = typeof result === "string" ? JSON.parse(result) : result;
+
+      // ✅ Save AI result to Firebase Firestore
+      await db.collection("debugBuddyResults").add({
+        analyze: parsed.analyze || "N/A",
+        errorType: parsed.type_of_error || "N/A",
+        language: parsed.programming_language_used || "N/A",
+        fix: parsed.fix || "N/A",
+        timestamp: new Date().toISOString(),
+      });
+
+      console.log("✅ Saved AI result to Firebase");
 
       // Create or reveal side panel
       if (!panel) {
