@@ -2,8 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth"; // ✅ fix here
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA9lOPDNbUeKswlhwL6Mujeb8jKF134nOk",
-  authDomain: "intelliprep-5b45f.firebaseapp.com",
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   projectId: "intelliprep-5b45f",
   storageBucket: "intelliprep-5b45f.appspot.com", // small typo fixed
   messagingSenderId: "1094431917407",

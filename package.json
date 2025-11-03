@@ -68,6 +68,7 @@
     },
     "dependencies": {
         "debug": "^4.4.3",
+        "dotenv": "^17.2.3",
         "engine.io": "^6.6.4",
         "firebase": "^12.4.0",
         "firebase-admin": "^13.5.0",
