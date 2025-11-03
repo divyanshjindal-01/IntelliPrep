@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <style>
+    * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background-color: #f4f6fa;
+  color: #222;
+  transition: 0.4s ease;
+}
+
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: #1f2937;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+}
+
+.sidebar ul {
+  list-style: none;
+  flex: 1;
+}
+
+.sidebar ul li {
+  padding: 10px 0;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.sidebar ul li:hover {
+  color: #60a5fa;
+  transform: translateX(5px);
+}
+
+.toggle-theme {
+  background: #374151;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: auto;
+  transition: 0.3s;
+}
+
+.toggle-theme:hover {
+  background: #2563eb;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  padding: 30px;
+}
+
+.main h1 {
+  font-size: 1.8rem;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Cards */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #111;
+}
+
+.card p {
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+/* Progress Bar */
+.progress-bar {
+  width: 100%;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 6px;
+  margin-top: 8px;
+}
+
+.progress {
+  width: 0%;
+  height: 6px;
+  background: #3b82f6;
+  animation: fillProgress 2s ease forwards;
+}
+
+/* Animations */
+@keyframes fillProgress {
+  to {
+    width: 70%;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark Mode */
+.dark {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.dark .sidebar {
+  background: #111827;
+}
+
+.dark .card {
+  background: #1e293b;
+  color: #e2e8f0;
+  box-shadow: 0 4px 10px rgba(255,255,255,0.05);
+}
+
+.dark .toggle-theme {
+  background: #2563eb;
+}
+
+.dark .progress-bar {
+  background: #334155;
+}
+
+.fixed {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+  </style>
+  <div class="dashboard" id="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h2>Dashboard</h2>
+      <ul>
+        <li>Menu 1</li>
+        <li>Menu 2</li>
+        <li>Menu 3</li>
+      </ul>
+      <button class="toggle-theme" id="toggleTheme">🌙 Dark Mode</button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <h1>Welcome, Student 👋</h1>
+
+      <div class="cards">
+        <!-- Card 1 -->
+        <div class="card">
+          <h3>Recent Errors & Fixes</h3>
+          <p>SyntaxError: Missing semicolon → <span class="fixed">Fixed ✅</span></p>
+          <p>TypeError: Undefined variable → <span class="fixed">Fixed ✅</span></p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="card">
+          <h3>Weak Topics Tracker</h3>
+          <p>Loops & Functions → Needs Practice</p>
+          <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="card">
+          <h3>Practice Suggestions</h3>
+          <p>👉 Solve 5 problems on Arrays</p>
+          <p>👉 Revise Recursion basics</p>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="card">
+          <h3>Code History Log</h3>
+          <p>20 Aug → Fixed Loop Error</p>
+          <p>25 Aug → Solved 3 Array Problems</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+
+@import "tailwindcss";
+
+
+body{
+  
+  /* margin-left:200px;
+  margin-right:200px; */
+}
+html {
+  scroll-behavior: smooth;
+}
