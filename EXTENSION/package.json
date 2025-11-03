@@ -3,7 +3,7 @@
     "displayName": "Debug Buddy",
     "description": "A VS Code extension to analyze and fix code using an AI backend.",
     "version": "0.0.1",
-    "main": "EXTENSION/extension.js",
+    "main": "./extension.js",
     "engines": {
         "vscode": "^1.103.0"
     },
