@@ -10,7 +10,7 @@ const ErrorDashboard = () => {
   const [userImage, setUserImage] = useState(null);
   const [errorData, setErrorData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [expandedId, setExpandedId] = useState(null); // for toggle expand analyze text
+  const [expandedId, setExpandedId] = useState(null);
 
   const { pathname } = useLocation();
 
@@ -22,7 +22,7 @@ const ErrorDashboard = () => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        fetchErrorData();
+        fetchErrorData(currentUser);
       }
     });
     return () => unsubscribe();
@@ -32,21 +32,33 @@ const ErrorDashboard = () => {
     try {
       const result = await signInWithPopup(auth, githubProvider);
       setUser(result.user);
-      await fetchErrorData();
+      await fetchErrorData(result.user);
     } catch (error) {
       console.error("GitHub login failed:", error);
     }
   };
 
-  const fetchErrorData = async () => {
+  // ✅ Modified version — filter data based on logged-in GitHub username
+  const fetchErrorData = async (currentUser = user) => {
     try {
+      if (!currentUser) return;
       setLoading(true);
+
       const querySnapshot = await getDocs(collection(db, "debugBuddyResults"));
-      const errors = querySnapshot.docs.map((doc) => ({
+      const allErrors = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setErrorData(errors);
+
+      // ✅ Filter: Only show data of this GitHub username
+      const filteredErrors = allErrors.filter(
+        (err) =>
+          err.username &&
+          currentUser.displayName &&
+          err.username.toLowerCase() === currentUser.displayName.toLowerCase()
+      );
+
+      setErrorData(filteredErrors);
     } catch (error) {
       console.error("Error fetching Firestore data:", error);
     } finally {
@@ -77,7 +89,6 @@ const ErrorDashboard = () => {
           Sign in with GitHub
         </button>
       </div>
-      
     );
   }
 
@@ -127,7 +138,7 @@ const ErrorDashboard = () => {
         </div>
 
         <button
-          onClick={fetchErrorData}
+          onClick={() => fetchErrorData(user)}
           className="bg-[#FF6EFF] text-[#0A001F] px-3 py-2 rounded-lg text-sm font-semibold shadow-md hover:scale-105 transition-all"
         >
           🔄 Refresh
@@ -145,7 +156,7 @@ const ErrorDashboard = () => {
             ⚠️ Recent Errors
           </h2>
           {errorData.length === 0 ? (
-            <p>No errors found.</p>
+            <p>No errors found for your account.</p>
           ) : (
             errorData.map((err) => (
               <div
