@@ -1,10 +1,10 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth"; // ✅ fix here
+import { getAuth, GoogleAuthProvider } from "firebase/auth"; 
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   projectId: "intelliprep-5b45f",
-  storageBucket: "intelliprep-5b45f.appspot.com", // small typo fixed
+  storageBucket: "intelliprep-5b45f.appspot.com", 
   messagingSenderId: "1094431917407",
   appId: "1:1094431917407:web:4419229b84f783aba022ea",
 };

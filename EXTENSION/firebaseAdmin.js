@@ -7,7 +7,7 @@ const serviceAccountPath = path.join(__dirname, "serviceAccountKey.json");
 // ⬅️ NOTE: You must use the serviceAccountPath variable here 
 // The require() function loads the JSON file content from the absolute path
 const serviceAccount = require(serviceAccountPath); 
-
+console.log("using service Account Path",serviceAccountPath)
 if (!admin.apps.length) {
  admin.initializeApp({
  credential: admin.credential.cert(serviceAccount),

@@ -1,4 +1,6 @@
 const vscode = require("vscode");
+const { exec } = require("child_process");
+const path = require("path");
 const { io } = require("socket.io-client");
 const { db } = require("./firebaseAdmin"); // ✅ Import Firestore
 const { v4: uuidv4 } = require("uuid"); // ⬅️ New: Import for unique ID
@@ -30,6 +32,52 @@ async function saveUserToDatabase(session) {
 }
 
 function activate(context) {
+    const backendPath = path.join(__dirname, "../BACKEND/server.js");
+  const pythonPath = path.join(__dirname, "ai.py");
+
+ vscode.window.showInformationMessage("🚀 Starting Debug Buddy services...");
+
+  // Launch Node.js backend
+  const nodeProcess = exec(`node "${backendPath}"`);
+  let pythonProcess = null;
+
+  nodeProcess.stdout.on("data", (data) => {
+    console.log(`Node server: ${data}`);
+
+    if (data.toString().includes("Server is running on")) {
+      vscode.window.showInformationMessage("✅ Node server started. Launching AI service...");
+
+      // Step 3: Start Python AI service
+      const pythonProcess = exec(`python "${pythonPath}"`);
+      pythonProcess.stdout.on("data", (pyData) => console.log(`[Python] ${pyData}`));
+      pythonProcess.stderr.on("data", (pyErr) => console.error(`[Python Error] ${pyErr}`));
+
+      // Step 4: Wait 2 seconds for both to be ready before connecting
+      setTimeout(() => {
+        vscode.window.showInformationMessage("⚙️ Connecting to backend...");
+        socket = io("http://localhost:5000");
+
+        socket.on("connect", () => {
+          console.log("[VSCode] ✅ Connected to backend");
+        });
+
+        socket.on("connect_error", (err) => {
+          console.error("[VSCode] ❌ Connection error:", err.message);
+        });
+      }, 2000);
+    }
+  });
+
+  nodeProcess.stderr.on("data", (err) => console.error(`[Node Error] ${err}`));
+  nodeProcess.on("close", (code) => console.log(`[Node] exited with code ${code}`));
+
+  // Auto-cleanup on deactivate
+  context.subscriptions.push({
+    dispose: () => {
+      nodeProcess.kill();
+    },
+  });
+
     // Connect to Python backend
     socket = io("http://localhost:5000");
 
