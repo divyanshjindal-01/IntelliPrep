@@ -28,6 +28,8 @@ const path = require("path");
 const { spawn } = require("child_process");
 const crypto = require("crypto");
 const { v4: uuidv4 } = require("uuid");
+const { io } = require("socket.io-client");
+
 
 /* ----------------------------- CONFIG ----------------------------- */
 const CONFIG = {
@@ -268,7 +270,6 @@ function stopChildProcesses() {
 
 /* ------------------------- SOCKET HELPERS ------------------------- */
 async function initSocketWithRetry(url, opts) {
-  const io = require("socket.io-client");
   let attempts = 0;
   const MAX_ATTEMPTS = 8;
 
@@ -557,6 +558,36 @@ function applyFix(newCode) {
 
 /* ---------------------------- ACTIVATE ---------------------------- */
 async function activate(context) {
+  vscode.window.showInformationMessage("🚀 Activating Debug Buddy...");
+
+   // 🔹 STEP 1: Define path to server.js
+  const serverPath = path.join(__dirname, "../BACKEND/server.js");
+
+  // 🔹 STEP 2: Start Node server if not already running
+  try {
+    const serverProcess = spawn("node", [serverPath], {
+      detached: true,
+      stdio: "ignore",  // prevents blocking VS Code
+      shell: true,
+    });
+    serverProcess.unref(); // allows server to run independently
+    console.log("✅ Node server launched");
+  } catch (err) {
+    console.error("❌ Failed to start server:", err);
+    vscode.window.showErrorMessage("Failed to start Debug Buddy backend.");
+  }
+
+  // 🔹 STEP 3: Connect extension to backend
+  const socket = io("http://localhost:5000", {
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 2000,
+  });
+
+  socket.on("connect", () => console.log("[VSCode] Connected to backend"));
+  socket.on("connect_error", (err) => console.error("Socket connect error:", err));
+
+  
   contextGlobal = context;
   createOutputChannel();
   updateStatus("info");

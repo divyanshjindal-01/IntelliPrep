@@ -124,16 +124,15 @@ def on_message(data):
 
     detected_lang = detect_language(code)
     prompt = f"""
-You are a helpful code analysis assistant. Analyze this code and return JSON only:
-{{
-  "analyze": "...",
-  "fix": "...",
-  "type_of_error": "...",
-  "programming_language_used": "..."
-}}
-Code:
-{code}
-"""
+    You are an AI code assistant. Analyze the following code and return ONLY a single JSON object. DO NOT include any explanatory text, markdown outside the JSON, or comments.
+    The JSON must have these keys:
+    - analyze: a clear, detailed explanation of issues found in plain English. Do NOT include fix, type_of_error, or language in this text.
+    - fix: the corrected version of the code
+    - type_of_error: one-word category (syntax, logic, style, performance, etc.)
+    - programming_language_used: detected programming language in one word
+    Code:
+    {code}
+    """
 
     try:
         response = model.generate_content(prompt)

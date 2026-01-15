@@ -83,10 +83,14 @@
 
 
 // 📁 backend/server.js
+
 const { Server } = require("socket.io");
 const io = new Server(5000, {
   cors: { origin: "*" },
 });
+const { spawn } = require("child_process");
+const python = spawn("python", ["./EXTENSION/ai.py"], { detached: true, stdio: "ignore" });
+python.unref();
 
 console.log("🚀 Socket.IO Server is running on http://localhost:5000");
 
